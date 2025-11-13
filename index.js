@@ -33,7 +33,7 @@ async function run() {
       const result = await tipsCollection
         .find()
         .sort({ createdAt: -1 })
-        .limit(5)
+        .limit(4)
         .toArray();
       res.send(result);
     });
