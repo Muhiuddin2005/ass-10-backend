@@ -29,6 +29,36 @@ async function run() {
     const tipsCollection = db.collection("tips");
     const eventsCollection = db.collection("events");
 
+app.get("/live-stats", async (req, res) => {
+  try {
+    const challenges = await challengeCollection.find().toArray();
+
+    let totalParticipants = 0;
+    let totalCO2Reduced = 0;
+    let totalWaterLiterSaved = 0;
+
+    challenges.forEach(challenge => {
+      totalParticipants += challenge.participants || 0;
+      if (challenge.impactMetric === "kg CO2 reduced") {
+        totalCO2Reduced += challenge.participants * 1;
+      }
+      if (challenge.impactMetric === "liters saved") {
+        totalWaterLiterSaved += challenge.participants * 1;
+      }
+    });
+
+    res.send({
+      totalParticipants,
+      totalCO2Reduced,
+      totalWaterLiterSaved,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ error: "Failed to fetch live statistics" });
+  }
+});
+
+
     app.get("/latest-tips", async (req, res) => {
       const result = await tipsCollection
         .find()
