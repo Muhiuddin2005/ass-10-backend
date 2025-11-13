@@ -26,6 +26,16 @@ async function run() {
 
     const challengeCollection = db.collection("challenges");
     const participantCollection = db.collection("participants");
+    const tipsCollection = db.collection("tips");
+
+    app.get("/latest-tips", async (req, res) => {
+      const result = await tipsCollection
+        .find()
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .toArray();
+      res.send(result);
+    });
 
     app.get("/challenges", async (req, res) => {
       const result = await challengeCollection.find().toArray();
