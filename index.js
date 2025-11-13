@@ -29,35 +29,34 @@ async function run() {
     const tipsCollection = db.collection("tips");
     const eventsCollection = db.collection("events");
 
-app.get("/live-stats", async (req, res) => {
-  try {
-    const challenges = await challengeCollection.find().toArray();
+    app.get("/live-stats", async (req, res) => {
+      try {
+        const challenges = await challengeCollection.find().toArray();
 
-    let totalParticipants = 0;
-    let totalCO2Reduced = 0;
-    let totalWaterLiterSaved = 0;
+        let totalParticipants = 0;
+        let totalCO2Reduced = 0;
+        let totalWaterLiterSaved = 0;
 
-    challenges.forEach(challenge => {
-      totalParticipants += challenge.participants || 0;
-      if (challenge.impactMetric == "kg CO2 reduced") {
-        totalCO2Reduced += challenge.participants * 1;
-      }
-      if (challenge.impactMetric == "liters saved") {
-        totalWaterLiterSaved += challenge.participants * 1;
+        challenges.forEach((challenge) => {
+          totalParticipants += challenge.participants || 0;
+          if (challenge.impactMetric == "kg CO2 reduced") {
+            totalCO2Reduced += challenge.participants * 1;
+          }
+          if (challenge.impactMetric == "liters saved") {
+            totalWaterLiterSaved += challenge.participants * 1;
+          }
+        });
+
+        res.send({
+          totalParticipants,
+          totalCO2Reduced,
+          totalWaterLiterSaved,
+        });
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({ error: "Failed to fetch live statistics" });
       }
     });
-
-    res.send({
-      totalParticipants,
-      totalCO2Reduced,
-      totalWaterLiterSaved,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send({ error: "Failed to fetch live statistics" });
-  }
-});
-
 
     app.get("/latest-tips", async (req, res) => {
       const result = await tipsCollection
@@ -68,7 +67,6 @@ app.get("/live-stats", async (req, res) => {
       res.send(result);
     });
     app.get("/upcoming-events", async (req, res) => {
-
       const result = await eventsCollection
         .find({ date: { $gte: new Date().toISOString() } })
         .sort({ date: 1 })
@@ -81,20 +79,57 @@ app.get("/live-stats", async (req, res) => {
       const result = await challengeCollection.find().toArray();
       res.send(result);
     });
+    app.get("/api/challenges/filter", async (req, res) => {
+      const { category, startDate, endDate, minParticipants, maxParticipants } =
+        req.query;
+
+      const filter = {};
+      if (category) {
+        const categoryArray = category.split(",").map((c) => c.trim());
+        filter.category = { $in: categoryArray };
+      }
+      if (startDate || endDate) {
+        filter.$and = [];
+
+        if (startDate) {
+          filter.$and.push({
+            endDate: { $gte: startDate },
+          });
+        }
+
+        if (endDate) {
+          filter.$and.push({
+            startDate: { $lte: endDate },
+          });
+        }
+      }
+
+      if (minParticipants || maxParticipants) {
+        filter.participants = {};
+        if (minParticipants)
+          filter.participants.$gte = parseInt(minParticipants);
+        if (maxParticipants)
+          filter.participants.$lte = parseInt(maxParticipants);
+      }
+
+      const result = await challengeCollection.find(filter).toArray();
+      res.send(result);
+    });
+
     app.get("/active-challenges", async (req, res) => {
-  const currentDate = new Date().toISOString();
+      const currentDate = new Date().toISOString();
 
-  const result = await challengeCollection
-    .find({
-      startDate: { $lte: currentDate },
-      endDate: { $gte: currentDate }
-    })
-    .sort({ startDate: -1 })
-    .limit(6)
-    .toArray();
+      const result = await challengeCollection
+        .find({
+          startDate: { $lte: currentDate },
+          endDate: { $gte: currentDate },
+        })
+        .sort({ startDate: -1 })
+        .limit(6)
+        .toArray();
 
-  res.send(result);
-});
+      res.send(result);
+    });
 
     app.post("/challenges", async (req, res) => {
       const data = req.body;
