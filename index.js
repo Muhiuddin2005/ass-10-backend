@@ -27,12 +27,24 @@ async function run() {
     const challengeCollection = db.collection("challenges");
     const participantCollection = db.collection("participants");
     const tipsCollection = db.collection("tips");
+    const eventsCollection = db.collection("events");
 
     app.get("/latest-tips", async (req, res) => {
       const result = await tipsCollection
         .find()
         .sort({ createdAt: -1 })
         .limit(5)
+        .toArray();
+      res.send(result);
+    });
+    app.get("/upcoming-events", async (req, res) => {
+      const db = client.db("eco-db");
+      const eventsCollection = db.collection("events");
+
+      const result = await eventsCollection
+        .find({ date: { $gte: new Date().toISOString() } })
+        .sort({ date: 1 })
+        .limit(4)
         .toArray();
       res.send(result);
     });
