@@ -38,8 +38,6 @@ async function run() {
       res.send(result);
     });
     app.get("/upcoming-events", async (req, res) => {
-      const db = client.db("eco-db");
-      const eventsCollection = db.collection("events");
 
       const result = await eventsCollection
         .find({ date: { $gte: new Date().toISOString() } })
