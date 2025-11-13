@@ -39,10 +39,10 @@ app.get("/live-stats", async (req, res) => {
 
     challenges.forEach(challenge => {
       totalParticipants += challenge.participants || 0;
-      if (challenge.impactMetric === "kg CO2 reduced") {
+      if (challenge.impactMetric == "kg CO2 reduced") {
         totalCO2Reduced += challenge.participants * 1;
       }
-      if (challenge.impactMetric === "liters saved") {
+      if (challenge.impactMetric == "liters saved") {
         totalWaterLiterSaved += challenge.participants * 1;
       }
     });
